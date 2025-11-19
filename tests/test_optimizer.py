@@ -4,6 +4,8 @@ from __future__ import annotations
 import sys
 from pathlib import Path
 
+import pytest
+
 PROJECT_ROOT = Path(__file__).resolve().parents[1] / "project"
 sys.path.insert(0, str(PROJECT_ROOT))
 
@@ -38,3 +40,9 @@ def test_stock_length_not_exceeded():
     plan = make_plan(grouped)
     for cut in plan["E14"].cuts:
         assert sum(cut.segments) <= plan["E14"].stock_length
+
+
+def test_rejects_lengths_longer_than_stock():
+    grouped = {"E16": [9000]}
+    with pytest.raises(ValueError):
+        make_plan(grouped, stock_length=8000)

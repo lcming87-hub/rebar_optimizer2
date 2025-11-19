@@ -62,6 +62,7 @@ class CuttingOptimizer:
 
     def _optimize_heuristic(self, diameter: str, lengths: Sequence[int]) -> DiameterPlan:
         stock_length = self.config.stock_length
+        self._validate_lengths(diameter, lengths, stock_length)
         bins: List[List[int]] = []
         remaining: List[int] = []
         for length in sorted(lengths, reverse=True):
@@ -117,6 +118,7 @@ class CuttingOptimizer:
         if pulp is None:
             raise RuntimeError("pulp is required for ILP optimization")
         stock_length = self.config.stock_length
+        self._validate_lengths(diameter, lengths, stock_length)
         pieces = list(lengths)
         max_bins = len(pieces)
         prob = pulp.LpProblem(f"Cutting_{diameter}", pulp.LpMinimize)
@@ -143,6 +145,13 @@ class CuttingOptimizer:
             cuts.append(StockCut(stock_id=idx, diameter=diameter,
                                  segments=segs_sorted, offcut=offcut))
         return DiameterPlan(diameter=diameter, stock_length=stock_length, cuts=cuts)
+
+    def _validate_lengths(self, diameter: str, lengths: Sequence[int], stock_length: int) -> None:
+        invalid = sorted({length for length in lengths if length > stock_length})
+        if invalid:
+            raise ValueError(
+                f"Lengths exceeding stock ({stock_length}mm) detected for {diameter}: {invalid}"
+            )
 
 
 def group_lengths(entries: Iterable[Tuple[str, int, int]]) -> Dict[str, List[int]]:
